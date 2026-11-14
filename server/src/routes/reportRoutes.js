@@ -96,6 +96,7 @@ router.post('/reports/:sessionId/override', async (req, res) => {
     }
 
     const result = await overrideRecommendation(sessionId, {
+      newRecommendation: finalRecommendation,
       finalRecommendation,
       reason,
       overriddenBy,

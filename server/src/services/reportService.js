@@ -380,7 +380,7 @@ async function getReport(sessionId, version = null) {
  */
 async function overrideRecommendation(
   sessionId,
-  { newRecommendation, reason, remarks = null, overriddenBy = null, version = null } = {}
+  { newRecommendation, finalRecommendation, reason, remarks = null, overriddenBy = null, version = null } = {}
 ) {
   if (!sessionId) {
     const err = new Error('sessionId is required.');
@@ -388,10 +388,11 @@ async function overrideRecommendation(
     throw err;
   }
 
+  const effectiveRecommendation = newRecommendation || finalRecommendation;
   const validRecs = Object.values(reportConfig.RECOMMENDATIONS);
-  if (!newRecommendation || !validRecs.includes(newRecommendation)) {
+  if (!effectiveRecommendation || !validRecs.includes(effectiveRecommendation)) {
     const err = new Error(
-      `Invalid recommendation "${newRecommendation}". Must be one of: ${validRecs.join(', ')}`
+      `Invalid recommendation "${effectiveRecommendation}". Must be one of: ${validRecs.join(', ')}`
     );
     err.statusCode = 400;
     throw err;
@@ -409,7 +410,7 @@ async function overrideRecommendation(
   const updatedReport = await prisma.report.update({
     where: { id: targetReport.id },
     data: {
-      finalRecommendation: newRecommendation,
+      finalRecommendation: effectiveRecommendation,
       overrideReason: reason.trim(),
       overriddenBy: overriddenBy ? String(overriddenBy).trim() : 'ASSESSMENT_BOARD',
       overriddenAt: new Date(),
