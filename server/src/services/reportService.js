@@ -550,10 +550,28 @@ async function listReports({ postId, recommendation, skip = 0, take = 50 } = {})
   };
 }
 
+/**
+ * Regenerates the assessment report for a session, incrementing version while preserving history.
+ * Alias matching route and client invocation.
+ *
+ * @async
+ * @param {string} sessionId - Interview session ID.
+ * @returns {Promise<object>} New Report entity (version + 1).
+ */
+async function regenerateReport(sessionId) {
+  return generateReport(sessionId, { regenerate: true });
+}
+
+const saveBoardRemarks = addBoardRemarks;
+const getAllRankings = listReports;
+
 module.exports = {
   generateReport,
   getReport,
   overrideRecommendation,
   addBoardRemarks,
+  saveBoardRemarks,
   listReports,
+  getAllRankings,
+  regenerateReport,
 };
