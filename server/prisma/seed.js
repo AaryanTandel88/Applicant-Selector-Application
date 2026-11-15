@@ -204,6 +204,25 @@ async function main() {
     const postsData = loadSeedData('posts.json');
     await seedPostsData(postsData);
 
+    // 4. Seed default Admin user idempotently (Part 7A)
+    const bcrypt = require('bcryptjs');
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@rac.drdo.in').toLowerCase().trim();
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@RAC123';
+    const existingAdmin = await prisma.user.findUnique({ where: { username: adminEmail } });
+    if (!existingAdmin) {
+      const passwordHash = bcrypt.hashSync(adminPassword, 10);
+      await prisma.user.create({
+        data: {
+          name: 'RAC Chief Administrator',
+          username: adminEmail,
+          passwordHash,
+          role: 'ADMIN',
+          isActive: true,
+        },
+      });
+      console.log(`✔ Admin user ready: ${adminEmail}`);
+    }
+
     console.log('\nAll seeding completed successfully!');
   } catch (error) {
     console.error('Error during database seeding:', error);

@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const skillMatchRoutes = require('./routes/skillMatchRoutes');
 const answerRoutes = require('./routes/answerRoutes');
 const postRoutes = require('./routes/postRoutes');
@@ -12,6 +13,8 @@ const sessionRoutes = require('./routes/sessionRoutes');
 const interviewRoutes = require('./routes/interviewRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const questionRoutes = require('./routes/questionRoutes');
+const authRoutes = require('./routes/authRoutes');
+const adminUserRoutes = require('./routes/adminUserRoutes');
 
 const app = express();
 
@@ -42,8 +45,11 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 
 // API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/admin/users', adminUserRoutes);
 app.use('/api', skillMatchRoutes);
 app.use('/api', answerRoutes);
 app.use('/api', postRoutes);
