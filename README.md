@@ -18,8 +18,8 @@ AI-based adaptive interview and candidate screening platform designed for the **
 
 ```
 Applicant Selector Application/
-├── client/                     # Placeholder for React + Tailwind CSS UI (future)
-│   └── README.md
+├── api/                        # Vercel serverless API entry point
+├── client/                     # React + Tailwind CSS frontend
 ├── server/                     # Node.js backend foundation & services
 │   ├── prisma/
 │   │   ├── migrations/         # Prisma migration history
@@ -66,7 +66,7 @@ Applicant Selector Application/
 │   ├── .env                    # Local environment config
 │   └── package.json            # Server dependencies & npm scripts
 ├── .gitignore
-├── package.json                # Root convenience proxy scripts
+├── package.json                # Root npm workspace and project scripts
 └── README.md
 ```
 
@@ -79,15 +79,33 @@ Applicant Selector Application/
 - **ORM & Migrations**: Prisma ORM (v6.x)
 - **Natural Language Processing**: Deterministic offline Porter Stemmer + Jaccard token overlap (via `natural`)
 - **API Framework**: Express.js
-- **Frontend Placeholder**: `/client` reserved for React + Tailwind CSS in subsequent parts
+- **Frontend**: React + Tailwind CSS with Vite
 - **Strictly Offline & Deterministic**: Zero external AI/LLM/embedding cloud API calls
 
 ---
 
 ## Prerequisites
 
-1. **Node.js** (v18.x or v20.x recommended)
+1. **Node.js** (v22.x)
 2. **PostgreSQL** running locally or accessible via network
+
+---
+
+## Deploy as One Vercel Project
+
+The repository root is the Vercel project root. The root npm workspace installs the client and server together; Vercel builds the Vite frontend as static output and runs the Express API as a serverless function. Frontend API calls use the same domain. The project targets Node.js 22.x.
+
+1. Import this repository into Vercel and leave **Root Directory** set to `.` (the repository root).
+2. Add these Project Environment Variables for the deployment environments you use:
+   - `DATABASE_URL`: connection string for a hosted PostgreSQL database.
+   - `AUTH_JWT_SECRET`: a unique secret; generate one with `openssl rand -base64 32`.
+3. Before the first deployment, apply migrations to the hosted database from the repository root:
+
+   ```bash
+   DATABASE_URL="your-production-database-url" npm run db:deploy
+   ```
+
+Vercel uses `npm ci` and `npm run build` from the root as configured in `vercel.json`. The build generates the Prisma client and builds `client/dist`. The API is available under `/api/*`; `/health` is retained as a health check. Do not use a local SQLite database or an ephemeral filesystem for production persistence.
 
 ---
 

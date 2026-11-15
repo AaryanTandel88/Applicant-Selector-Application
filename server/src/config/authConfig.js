@@ -4,9 +4,16 @@
 
 /**
  * JWT secret used to sign and verify tokens. Must be a strong secret.
- * Set via AUTH_JWT_SECRET env var; fallback to a development placeholder.
+ * Set via AUTH_JWT_SECRET in production; development uses a placeholder.
  */
-const JWT_SECRET = process.env.AUTH_JWT_SECRET || "dev-secret-change-me";
+const configuredJwtSecret = process.env.AUTH_JWT_SECRET;
+if (
+  process.env.NODE_ENV === 'production' &&
+  (!configuredJwtSecret || configuredJwtSecret === 'dev-secret-change-me')
+) {
+  throw new Error('Set AUTH_JWT_SECRET to a unique secret in production');
+}
+const JWT_SECRET = configuredJwtSecret || "dev-secret-change-me";
 
 /**
  * JWT expiration time (e.g., '2h', '30m'). Configurable via AUTH_JWT_EXPIRES.
@@ -36,4 +43,3 @@ module.exports = {
   LOCKOUT_DURATION_SECONDS,
   loginAttempts,
 };
-
