@@ -26,7 +26,8 @@ app.use((req, res, next) => {
     'http://127.0.0.1:4173',
   ];
   const origin = req.headers.origin;
-  if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+  const isVercelOrigin = origin && (origin.endsWith('.vercel.app') || origin === process.env.CLIENT_URL);
+  if (!origin || allowedOrigins.includes(origin) || isVercelOrigin || process.env.NODE_ENV !== 'production') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
