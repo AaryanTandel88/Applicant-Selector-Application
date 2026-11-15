@@ -56,6 +56,9 @@ app.use('/api', reportRoutes);
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'RAC DRDO Skill-Match Engine' });
 });
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'RAC DRDO Skill-Match Engine' });
+});
 
 // Fallback 404 handler
 app.use((req, res) => {
