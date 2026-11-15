@@ -1,6 +1,9 @@
 {
   "name": "rac-interview-server",
   "version": "1.0.0",
+  "engines": {
+    "node": "22.x"
+  },
   "description": "RAC DRDO Adaptive Interview System - Backend Foundation, Question Bank & Skill-Match Module",
   "main": "src/app.js",
   "scripts": {

@@ -91,11 +91,11 @@ Applicant Selector Application/
 
 ---
 
-## Deploy as One Vercel Project
+## Deploy as One Vercel Project with Services
 
-The repository root is the Vercel project root. The root npm workspace installs the client and server together; Vercel builds the Vite frontend as static output and runs the Express API as a serverless function. Frontend API calls use the same domain. The project targets Node.js 22.x.
+The repository root is the Vercel project root. `vercel.json` defines two independently built services: a Vite frontend rooted at `client/` and an Express API rooted at `server/`. The public `/api/*` and `/health` paths route to the API service; all other paths route to the frontend. The browser calls the API through the same-origin `/api` path, so no service binding is needed. Both services target Node.js 22.x.
 
-1. Import this repository into Vercel and leave **Root Directory** set to `.` (the repository root).
+1. Import this repository into Vercel and set **Root Directory** to `.` (the repository root). Choose the option to group multiple applications into one project using Services, not separate projects.
 2. Add these Project Environment Variables for the deployment environments you use:
    - `DATABASE_URL`: connection string for a hosted PostgreSQL database.
    - `AUTH_JWT_SECRET`: a unique secret; generate one with `openssl rand -base64 32`.
@@ -105,7 +105,7 @@ The repository root is the Vercel project root. The root npm workspace installs 
    DATABASE_URL="your-production-database-url" npm run db:deploy
    ```
 
-Vercel uses `npm ci` and `npm run build` from the root as configured in `vercel.json`. The build generates the Prisma client and builds `client/dist`. The API is available under `/api/*`; `/health` is retained as a health check. Do not use a local SQLite database or an ephemeral filesystem for production persistence.
+Each service uses its own `npm ci` install and lockfile. The frontend builds to `client/dist`; the server generates the Prisma client and exports the Express app from `server/src/app.js`. Do not use a local PostgreSQL instance or an ephemeral filesystem for production persistence.
 
 ---
 

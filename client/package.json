@@ -2,6 +2,9 @@
   "name": "rac-interview-client",
   "private": true,
   "version": "1.0.0",
+  "engines": {
+    "node": "22.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,4 +25,3 @@
     "vite": "^6.0.7"
   }
 }
-
