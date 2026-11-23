@@ -1,99 +1,317 @@
 # 2. Entity-Relationship (ER) Diagram & Data Modelling
 
-## A. Entity Overview & Cardinalities
+## A. Visual ER Diagram (Mermaid Notation)
 
-The database consists of **15 relational tables** organized into 5 functional domains:
+```mermaid
+erDiagram
+    SUBJECT ||--|{ TOPIC : contains
+    SUBJECT ||--|{ POST : categorizes
+    TOPIC ||--o{ QUESTION : organizes
+    QUESTION ||--o{ QUESTION : "parentQId (follow-up chain)"
+    QUESTION ||--o{ RESPONSE : evaluated_in
+    
+    CANDIDATE ||--|{ SESSION : attempts
+    CANDIDATE ||--|{ CANDIDATE_SKILL : possesses
+    CANDIDATE ||--|{ SKILL_MATCH_RESULT : evaluated_for
+    CANDIDATE ||--|{ REPORT : receives
+    
+    SESSION ||--|{ RESPONSE : records
+    SESSION ||--|| SESSION_STATE : tracks_cursor
+    SESSION ||--|{ DECISION_LOG : audits
+    SESSION ||--|| CANDIDATE_ACCESS : authenticated_by
+    SESSION ||--|{ REPORT : summarized_in
 
-```
-[Subject] 1 ────< N [Topic] 1 ────< N [Question] (Self-ref: parentQId)
-   │                                         │
-   │ 1                                       │ 1
-   │                                         │
-   ▼ N                                       ▼ N
- [Post] 1 ────< N [PostSkill]             [Response] N >──── 1 [Session] 1 ─── 1 [SessionState]
-   │                                                              │
-   │ 1                                                            │ 1
-   ▼ N                                                            ▼ N
-[SkillMatchResult] N >──── 1 [Candidate] 1 ───────────────────< N [DecisionLog]
-                                  │
-                                  │ 1
-                                  ▼ N
-                           [CandidateSkill]
+    POST ||--|{ POST_SKILL : requires
+    POST ||--|{ SKILL_MATCH_RESULT : compared_against
+    POST ||--|{ REPORT : applies_to
+
+    USER ||--o{ AUDIT_LOG : triggers
+
+    SUBJECT {
+        text id PK
+        text name UK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    TOPIC {
+        text id PK
+        text subjectId FK
+        text name
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    QUESTION {
+        text id PK
+        text topicId FK
+        text parentQId FK
+        enum difficulty
+        enum levelTag
+        text questionText
+        text simplifiedText
+        text idealAnswer
+        text_array keywords
+        text source
+        text status
+        text_array aspectKeywords
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    CANDIDATE {
+        text id PK
+        text name
+        text postApplied
+        text experienceLevel
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    SESSION {
+        text id PK
+        text candidateId FK
+        timestamp startTime
+        timestamp endTime
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    RESPONSE {
+        text id PK
+        text sessionId FK
+        text questionId FK
+        text answerText
+        float relevancyScore
+        float correctnessScore
+        float answerScore
+        text verdict
+        jsonb breakdown
+        boolean isReask
+        timestamp timestamp
+    }
+
+    POST {
+        text id PK
+        text subjectId FK
+        text title
+        text level
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    POST_SKILL {
+        text id PK
+        text postId FK
+        text skillName
+        int weight
+        boolean isMandatory
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    CANDIDATE_SKILL {
+        text id PK
+        text candidateId FK
+        text skillName
+        timestamp createdAt
+    }
+
+    SKILL_MATCH_RESULT {
+        text id PK
+        text candidateId FK
+        text postId FK
+        float matchPercent
+        text band
+        jsonb breakdown
+        timestamp createdAt
+    }
+
+    SESSION_STATE {
+        text id PK
+        text sessionId FK,UK
+        text currentTopicId
+        enum currentDifficulty
+        text currentQuestionId
+        text phase
+        int technicalCount
+        int icebreakerCount
+        int consecutiveIrrelevant
+        jsonb topicProgress
+        text status
+        text endReason
+        jsonb expertQueue
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    DECISION_LOG {
+        text id PK
+        text sessionId FK
+        int step
+        text questionId
+        text verdict
+        text fromDifficulty
+        text toDifficulty
+        text action
+        text reason
+        timestamp createdAt
+    }
+
+    REPORT {
+        text id PK
+        text sessionId FK
+        text candidateId FK
+        text postId FK
+        int version
+        timestamp generatedAt
+        jsonb configSnapshot
+        float skillMatchPercent
+        text skillMatchBand
+        boolean mandatoryGap
+        jsonb missingMandatory
+        float interviewScore
+        float overallScore
+        text systemRecommendation
+        text finalRecommendation
+        boolean terminatedEarly
+        text endReason
+        float questionRelevancyScore
+        text questionRelevancyBand
+        jsonb topicScores
+        jsonb questionTable
+        jsonb difficultyProgression
+        jsonb flags
+        jsonb decisionLog
+        text boardRemarks
+        text overriddenBy
+        timestamp overriddenAt
+        text overrideReason
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    USER {
+        text id PK
+        text name
+        text username UK
+        text passwordHash
+        enum role
+        boolean isActive
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    AUDIT_LOG {
+        text id PK
+        text userId FK
+        text action
+        text entityType
+        text entityId
+        jsonb details
+        timestamp createdAt
+    }
+
+    CANDIDATE_ACCESS {
+        text id PK
+        text sessionId FK,UK
+        text tokenHash
+        timestamp expiresAt
+        timestamp createdAt
+    }
 ```
 
 ---
 
-## B. Complete Entity Specifications
+## B. ASCII Architecture Diagram
 
-### 1. Curriculum & Question Bank Domain
-- **`Subject`**: Academic / defence engineering domain.
-  - `id` (PK, UUID), `name` (VARCHAR, UNIQUE), `createdAt`, `updatedAt`.
-  - Cardinality: `1:N` with `Topic`, `1:N` with `Post`.
-- **`Topic`**: Sub-discipline within a subject.
-  - `id` (PK, UUID), `subjectId` (FK -> `Subject.id`, ON DELETE CASCADE), `name` (VARCHAR), `createdAt`, `updatedAt`.
-  - Constraint: `UNIQUE(subjectId, name)`.
-  - Cardinality: `1:N` with `Question`.
-- **`Question`**: Technical or icebreaker assessment prompt.
-  - `id` (PK, UUID), `topicId` (FK -> `Topic.id`, ON DELETE SET NULL), `parentQId` (FK -> `Question.id`, ON DELETE SET NULL), `difficulty` (`EASY | MEDIUM | HARD`), `levelTag` (`TECHNICAL | MANAGERIAL | ICEBREAKER`), `questionText` (TEXT), `simplifiedText` (TEXT), `idealAnswer` (TEXT), `keywords` (TEXT[]), `source` (`BANK | EXPERT`), `status` (`ACTIVE | ARCHIVED`), `aspectKeywords` (TEXT[]).
-  - Indices: `INDEX(topicId, difficulty)`, `INDEX(parentQId)`.
-  - Cardinality: Self-referencing `1:N` via `parentQId`; `1:N` with `Response`.
-
-### 2. Candidate & Session Domain
-- **`Candidate`**: Applicant undergoing DRDO evaluation.
-  - `id` (PK, UUID), `name` (VARCHAR), `postApplied` (VARCHAR), `experienceLevel` (VARCHAR), `createdAt`, `updatedAt`.
-  - Cardinality: `1:N` with `Session`, `1:N` with `CandidateSkill`, `1:N` with `SkillMatchResult`, `1:N` with `Report`.
-- **`Session`**: A single scheduled or completed interview.
-  - `id` (PK, UUID), `candidateId` (FK -> `Candidate.id`, ON DELETE CASCADE), `startTime` (TIMESTAMP), `endTime` (TIMESTAMP, nullable), `createdAt`, `updatedAt`.
-  - Cardinality: `1:N` with `Response`, `1:1` with `SessionState`, `1:N` with `DecisionLog`, `1:1` with `CandidateAccess`.
-- **`Response`**: Answer provided by candidate to a question in a session.
-  - `id` (PK, UUID), `sessionId` (FK -> `Session.id`, ON DELETE CASCADE), `questionId` (FK -> `Question.id`, ON DELETE RESTRICT), `answerText` (TEXT), `relevancyScore` (FLOAT), `correctnessScore` (FLOAT), `answerScore` (FLOAT), `verdict` (`STRONG | PARTIAL | IRRELEVANT`), `breakdown` (JSON), `isReask` (BOOLEAN DEFAULT false), `timestamp` (TIMESTAMP).
-  - Constraint: `UNIQUE(sessionId, questionId, isReask)`.
-
-### 3. Skill Matching Domain (M:N Resolution)
-- **`Post`**: Job vacancy advertisement (e.g. Scientist 'C' - ASD).
-  - `id` (PK, UUID), `subjectId` (FK -> `Subject.id`, ON DELETE CASCADE), `title` (VARCHAR), `level` (VARCHAR), `createdAt`, `updatedAt`.
-- **`PostSkill`**: Resolves `Post <-> Skill` M:N.
-  - `id` (PK, UUID), `postId` (FK -> `Post.id`, ON DELETE CASCADE), `skillName` (VARCHAR), `weight` (INT, 1-5), `isMandatory` (BOOLEAN), `createdAt`, `updatedAt`.
-  - Constraint: `UNIQUE(postId, skillName)`.
-- **`CandidateSkill`**: Resolves `Candidate <-> Skill` M:N.
-  - `id` (PK, UUID), `candidateId` (FK -> `Candidate.id`, ON DELETE CASCADE), `skillName` (VARCHAR), `createdAt`.
-  - Constraint: `UNIQUE(candidateId, skillName)`.
-- **`SkillMatchResult`**: Pre-interview suitability scoring result.
-  - `id` (PK, UUID), `candidateId` (FK -> `Candidate.id`, ON DELETE CASCADE), `postId` (FK -> `Post.id`, ON DELETE CASCADE), `matchPercent` (FLOAT), `band` (`STRONG | MODERATE | WEAK`), `breakdown` (JSON), `createdAt`.
-
-### 4. Adaptive Engine State Machine
-- **`SessionState`**: Active cursor of the interview state machine.
-  - `id` (PK, UUID), `sessionId` (FK -> `Session.id`, ON DELETE CASCADE, UNIQUE), `currentTopicId` (VARCHAR), `currentDifficulty` (`EASY | MEDIUM | HARD`), `currentQuestionId` (VARCHAR), `phase` (`ICEBREAKER | TECHNICAL | COMPLETED`), `technicalCount` (INT), `icebreakerCount` (INT), `consecutiveIrrelevant` (INT), `topicProgress` (JSON), `status` (`ACTIVE | COMPLETED`), `endReason` (VARCHAR), `expertQueue` (JSON).
-- **`DecisionLog`**: Step-by-step audit log of adaptive state machine decisions.
-  - `id` (PK, UUID), `sessionId` (FK -> `Session.id`, ON DELETE CASCADE), `step` (INT), `questionId` (VARCHAR), `verdict` (VARCHAR), `fromDifficulty` (VARCHAR), `toDifficulty` (VARCHAR), `action` (VARCHAR), `reason` (TEXT), `createdAt`.
-  - Indices: `INDEX(sessionId, step)`.
-
-### 5. Final Report & Governance Domain
-- **`Report`**: Immutable final evaluation dossier.
-  - `id` (PK, UUID), `sessionId` (FK -> `Session.id`, ON DELETE CASCADE), `candidateId` (FK -> `Candidate.id`, ON DELETE CASCADE), `postId` (FK -> `Post.id`, ON DELETE CASCADE), `version` (INT DEFAULT 1), `skillMatchPercent` (FLOAT), `interviewScore` (FLOAT), `overallScore` (FLOAT), `systemRecommendation` (`SUITABLE | BORDERLINE | NOT_SUITABLE`), `finalRecommendation` (VARCHAR), `topicScores` (JSON), `flags` (JSON), `boardRemarks` (TEXT), `overriddenBy` (VARCHAR), `overrideReason` (TEXT).
-  - Constraint: `UNIQUE(sessionId, version)`.
-- **`User`**: Board examiner or administrator.
-  - `id` (PK, UUID), `name` (VARCHAR), `username` (VARCHAR, UNIQUE), `passwordHash` (VARCHAR), `role` (`ADMIN | EXAMINER`), `isActive` (BOOLEAN).
-- **`AuditLog`**: System and user audit trail.
-  - `id` (PK, UUID), `userId` (FK -> `User.id`), `action` (VARCHAR), `entityType` (VARCHAR), `entityId` (VARCHAR), `details` (JSON).
+```
++-------------------------------------------------------------------------------------------------------------------+
+|                                                 CURRICULUM DOMAIN                                                 |
+|                                                                                                                   |
+|   +---------------+ 1         N +-------------+ 1         N +------------------+                                  |
+|   |    SUBJECT    |------------>|    TOPIC    |------------>|     QUESTION     |                                  |
+|   +---------------+             +-------------+             +------------------+                                  |
+|           | 1                                                 | 1          ^                                      |
+|           |                                                   |            | parentQId (Recursive 1:N)            |
+|           | N                                                 |            +--------------------------+           |
+|           v                                                   | N                                     |           |
+|   +---------------+ 1         N +-------------+               v                                       |           |
+|   |     POST      |------------>|  POST_SKILL |         +------------------+                          |           |
+|   +---------------+             +-------------+         |     RESPONSE     |                          |           |
+|           | 1                                           +------------------+                          |           |
+|           |                                                   | N                                     |           |
+|           | N                                                 |                                       |           |
+|           v                                                   v 1                                     |           |
+|   +--------------------+ 1    N +-------------+ 1         N +------------------+ 1         1 +------------------+ |
+|   | SKILL_MATCH_RESULT |<-------|  CANDIDATE  |------------>|     SESSION      |------------>|  SESSION_STATE   | |
+|   +--------------------+        +-------------+             +------------------+             +------------------+ |
+|                                       | 1                     | 1          | 1                                    |
+|                                       |                       |            |                                      |
+|                                       | N                     | N          v 1                                    |
+|                                       v                       |     +------------------+                          |
+|                                 +-------------+               |     | CANDIDATE_ACCESS |                          |
+|                                 | CAND_SKILL  |               |     +------------------+                          |
+|                                 +-------------+               v                                                   |
+|                                                         +------------------+                                      |
+|                                                         |   DECISION_LOG   |                                      |
+|                                                         +------------------+                                      |
+|                                                                                                                   |
+|                                                 GOVERNANCE DOMAIN                                                 |
+|                                                                                                                   |
+|           +---------------------------------------------------------------------------------------+               |
+|           |                                        REPORT                                         |               |
+|           | (SessionId FK, CandidateId FK, PostId FK, Composite UNIQUE: [sessionId, version])     |               |
+|           +---------------------------------------------------------------------------------------+               |
+|                                                                                                                   |
+|                                 +-------------+ 1         N +------------------+                          |
+|                                 |    USER     |------------>|    AUDIT_LOG     |                          |
+|                                 +-------------+             +------------------+                          |
++-------------------------------------------------------------------------------------------------------------------+
+```
 
 ---
 
-## C. Relationship Categorization
-1. **One-to-One (1:1)**:
-   - `Session` -> `SessionState`: Guaranteed by `UNIQUE(sessionId)` on `SessionState`. Ensures an active interview has exactly one state cursor.
-   - `Session` -> `CandidateAccess`: One login access token per interview session.
-2. **One-to-Many (1:N)**:
-   - `Subject` -> `Topic`
-   - `Topic` -> `Question`
-   - `Candidate` -> `Session`
-   - `Session` -> `Response`
-   - `Post` -> `PostSkill`
-   - `Candidate` -> `CandidateSkill`
-   - `Session` -> `DecisionLog`
-3. **Self-Referencing 1:N**:
-   - `Question` -> `Question` via `parentQId`. Chains parent questions to follow-ups.
-4. **Many-to-Many (M:N) Resolution**:
-   - `Post <-> Skill` resolved via associative entity `PostSkill`.
-   - `Candidate <-> Skill` resolved via associative entity `CandidateSkill`.
-   - `Candidate <-> Post` evaluation resolved via `SkillMatchResult` and versioned `Report`.
+## C. Entity Attributes, Keys & Data Types
+
+| Entity | Primary Key | Foreign Keys | Key Attributes & Enums | Constraints |
+| :--- | :--- | :--- | :--- | :--- |
+| **`Subject`** | `id` (UUID) | None | `name` (TEXT) | `UNIQUE(name)` |
+| **`Topic`** | `id` (UUID) | `subjectId` $\to$ `Subject.id` | `name` (TEXT) | `UNIQUE(subjectId, name)`, `ON DELETE CASCADE` |
+| **`Question`** | `id` (UUID) | `topicId` $\to$ `Topic.id`<br>`parentQId` $\to$ `Question.id` | `difficulty` (`EASY`, `MEDIUM`, `HARD`)<br>`levelTag` (`TECHNICAL`, `MANAGERIAL`, `ICEBREAKER`)<br>`questionText` (TEXT)<br>`simplifiedText` (TEXT)<br>`idealAnswer` (TEXT)<br>`keywords` (TEXT[])<br>`source` (`BANK`, `EXPERT`) | `INDEX(topicId, difficulty)`<br>`INDEX(parentQId)`<br>`ON DELETE SET NULL` |
+| **`Candidate`** | `id` (UUID) | None | `name` (TEXT)<br>`postApplied` (TEXT)<br>`experienceLevel` (TEXT) | `INDEX(name)` |
+| **`Session`** | `id` (UUID) | `candidateId` $\to$ `Candidate.id` | `startTime` (TIMESTAMP)<br>`endTime` (TIMESTAMP) | `INDEX(candidateId)`<br>`ON DELETE CASCADE` |
+| **`Response`** | `id` (UUID) | `sessionId` $\to$ `Session.id`<br>`questionId` $\to$ `Question.id` | `answerText` (TEXT)<br>`relevancyScore` (FLOAT)<br>`correctnessScore` (FLOAT)<br>`answerScore` (FLOAT)<br>`verdict` (TEXT)<br>`breakdown` (JSONB)<br>`isReask` (BOOLEAN) | `UNIQUE(sessionId, questionId, isReask)`<br>`ON DELETE CASCADE` (Session)<br>`ON DELETE RESTRICT` (Question) |
+| **`Post`** | `id` (UUID) | `subjectId` $\to$ `Subject.id` | `title` (TEXT)<br>`level` (TEXT) | `INDEX(subjectId)`<br>`ON DELETE CASCADE` |
+| **`PostSkill`** | `id` (UUID) | `postId` $\to$ `Post.id` | `skillName` (TEXT)<br>`weight` (INT, 1–5)<br>`isMandatory` (BOOLEAN) | `UNIQUE(postId, skillName)`<br>`ON DELETE CASCADE` |
+| **`CandidateSkill`**| `id` (UUID) | `candidateId` $\to$ `Candidate.id` | `skillName` (TEXT) | `UNIQUE(candidateId, skillName)`<br>`ON DELETE CASCADE` |
+| **`SkillMatchResult`**| `id` (UUID) | `candidateId` $\to$ `Candidate.id`<br>`postId` $\to$ `Post.id` | `matchPercent` (FLOAT)<br>`band` (`STRONG`, `MODERATE`, `WEAK`)<br>`breakdown` (JSONB) | `INDEX(candidateId)`<br>`INDEX(postId)`<br>`ON DELETE CASCADE` |
+| **`SessionState`** | `id` (UUID) | `sessionId` $\to$ `Session.id` | `currentTopicId` (TEXT)<br>`currentDifficulty` (`Difficulty`)<br>`currentQuestionId` (TEXT)<br>`phase` (TEXT)<br>`technicalCount` (INT)<br>`icebreakerCount` (INT)<br>`consecutiveIrrelevant` (INT)<br>`topicProgress` (JSONB)<br>`status` (TEXT) | `UNIQUE(sessionId)`<br>`ON DELETE CASCADE` |
+| **`DecisionLog`** | `id` (UUID) | `sessionId` $\to$ `Session.id` | `step` (INT)<br>`questionId` (TEXT)<br>`verdict` (TEXT)<br>`fromDifficulty` (TEXT)<br>`toDifficulty` (TEXT)<br>`action` (TEXT)<br>`reason` (TEXT) | `INDEX(sessionId, step)`<br>`ON DELETE CASCADE` |
+| **`Report`** | `id` (UUID) | `sessionId` $\to$ `Session.id`<br>`candidateId` $\to$ `Candidate.id`<br>`postId` $\to$ `Post.id` | `version` (INT)<br>`skillMatchPercent` (FLOAT)<br>`interviewScore` (FLOAT)<br>`overallScore` (FLOAT)<br>`systemRecommendation` (TEXT)<br>`finalRecommendation` (TEXT)<br>`topicScores` (JSONB)<br>`flags` (JSONB)<br>`boardRemarks` (TEXT)<br>`overriddenBy` (TEXT) | `UNIQUE(sessionId, version)`<br>`ON DELETE CASCADE` |
+| **`User`** | `id` (UUID) | None | `username` (TEXT, UNIQUE)<br>`passwordHash` (TEXT)<br>`role` (`ADMIN`, `EXAMINER`)<br>`isActive` (BOOLEAN) | `UNIQUE(username)` |
+| **`AuditLog`** | `id` (UUID) | `userId` $\to$ `User.id` | `action` (TEXT)<br>`entityType` (TEXT)<br>`entityId` (TEXT)<br>`details` (JSONB) | `INDEX(userId)`<br>`ON DELETE SET NULL` |
+| **`CandidateAccess`**| `id` (UUID) | `sessionId` $\to$ `Session.id` | `tokenHash` (TEXT)<br>`expiresAt` (TIMESTAMP) | `UNIQUE(sessionId)`<br>`ON DELETE CASCADE` |
+
+---
+
+## D. Cardinality and Structural Relationship Explanations
+
+### 1. One-to-One (1:1) Relationships
+- **`Session <-> SessionState`**: A candidate interview session has exactly one ongoing state cursor. This is physically enforced by the `UNIQUE(sessionId)` constraint on `SessionState`. It tracks the current topic, active question ID, difficulty, and question counters.
+- **`Session <-> CandidateAccess`**: Each session generates exactly one temporary token hash for authentication, enforced by `UNIQUE(sessionId)`.
+
+### 2. One-to-Many (1:N) Relationships
+- **`Subject -> Topic`**: One engineering discipline contains multiple topics. Enforces `ON DELETE CASCADE`.
+- **`Topic -> Question`**: One topic contains multiple categorized questions. Enforces `ON DELETE SET NULL` on `Question.topicId` so that questions can remain in the question bank even if a topic is reorganized.
+- **`Candidate -> Session`**: A candidate can undertake multiple interviews over time.
+- **`Session -> Response`**: A single interview records an ordered series of candidate responses.
+- **`Session -> DecisionLog`**: Every adaptive decision is sequentially appended to the session's audit log.
+
+### 3. Recursive Self-Referencing 1:N Relationship
+- **`Question -> Question` via `parentQId`**: Enables the adaptive ladder to chain related technical concepts. For instance, when a candidate answers an `EASY` question on functional requirements with a `STRONG` verdict, the query `SELECT * FROM "Question" WHERE "parentQId" = :currentQuestionId` immediately retrieves the pre-linked `MEDIUM` follow-up on bidirectional requirements traceability.
+
+### 4. Many-to-Many (M:N) Resolutions
+- **`Post <-> Skill` M:N**: Resolved via associative entity `PostSkill`. This table holds relational attributes: `weight` (1 to 5) indicating competency importance and `isMandatory` (true/false) to flag mandatory skill gaps.
+- **`Candidate <-> Skill` M:N**: Resolved via associative entity `CandidateSkill`.
+- **`Candidate <-> Post` M:N Assessment**: Resolved via `SkillMatchResult` and versioned `Report`.
