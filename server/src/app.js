@@ -4,6 +4,8 @@
  */
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const cookieParser = require('cookie-parser');
 const skillMatchRoutes = require('./routes/skillMatchRoutes');
 const answerRoutes = require('./routes/answerRoutes');
@@ -66,6 +68,19 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'RAC DRDO Skill-Match Engine' });
 });
+
+// In the single-service production deployment, serve the Vite app from the
+// same origin as the API. The directory is absent for API-only deployments.
+const clientBuildPath = path.resolve(__dirname, '../../client/dist');
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
+
+  // Support React Router URLs such as /setup and /reports on page refresh.
+  app.get(/.*/, (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 // Fallback 404 handler
 app.use((req, res) => {

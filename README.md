@@ -107,6 +107,12 @@ The repository root is the Vercel project root. `vercel.json` defines two indepe
 
 Each service uses its own `npm ci` install and lockfile. The frontend builds to `client/dist`; the server generates the Prisma client and exports the Express app from `server/src/app.js`. Do not use a local PostgreSQL instance or an ephemeral filesystem for production persistence.
 
+## Deploy the full app on Render
+
+To serve the dashboard and API from one Render web service, configure the service with the repository root as its **Root Directory**, `npm install && npm run build` as the **Build Command**, and `npm start` as the **Start Command**. The build must run from the repository root so it creates `client/dist`; the Express server will serve that frontend and its client-side routes alongside `/api/*`.
+
+Set `DATABASE_URL` to a persistent hosted PostgreSQL database and `AUTH_JWT_SECRET` in Render's environment settings, then run `npm run db:deploy` from the repository root once against that database to apply migrations. `/health` and `/api/health` remain API health checks.
+
 ---
 
 ## Step-by-Step Setup Guide
