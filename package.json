@@ -16,6 +16,8 @@
     "client:dev": "npm --prefix client run dev",
     "client:build": "npm --prefix client run build",
     "client:preview": "npm --prefix client run preview",
+    "desktop": "npm --prefix desktop start",
+    "desktop:build": "npm --prefix desktop run build:mac",
     "build": "npm --workspace server run db:generate && npm --workspace client run build",
     "db:migrate": "npm --prefix server run db:migrate",
     "db:deploy": "npm --prefix server run db:deploy",

@@ -113,6 +113,18 @@ To serve the dashboard and API from one Render web service, configure the servic
 
 Set `DATABASE_URL` to a persistent hosted PostgreSQL database and `AUTH_JWT_SECRET` in Render's environment settings, then run `npm run db:deploy` from the repository root once against that database to apply migrations. `/health` and `/api/health` remain API health checks.
 
+## Run the desktop app on macOS
+
+The native macOS app opens the deployed Applicant Selector site in a WebKit window and uses the same hosted API and database. It requires an internet connection. From the repository root, build it with:
+
+```bash
+npm run desktop:mac
+```
+
+This creates `dist-desktop/Applicant Selector.app`. Open it from Finder like any other Mac app. The app only allows navigation to the deployed Applicant Selector site.
+
+The app is unsigned. macOS may require you to confirm opening it the first time; sharing it broadly without that warning requires Apple Developer signing and notarization.
+
 ---
 
 ## Step-by-Step Setup Guide

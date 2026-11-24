@@ -1,0 +1,55 @@
+{
+  "name": "applicant-selector-desktop",
+  "version": "1.0.0",
+  "description": "RAC DRDO Applicant Selector Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux"
+  },
+  "keywords": [
+    "electron",
+    "applicant-selector",
+    "drdo",
+    "desktop"
+  ],
+  "author": "RAC DRDO Development Team",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.racdrdo.applicantselector",
+    "productName": "Applicant Selector",
+    "directories": {
+      "output": "../dist-desktop"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  }
+}

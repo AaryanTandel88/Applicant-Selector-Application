@@ -9,6 +9,7 @@ node_modules/
 # Build outputs
 dist/
 */dist/
+dist-desktop/
 
 # Logs
 *.log
@@ -19,4 +20,5 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
 
